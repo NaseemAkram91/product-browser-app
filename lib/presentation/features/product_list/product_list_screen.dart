@@ -117,8 +117,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             Expanded(
               child: BlocConsumer<ProductListBloc, ProductListState>(
                 listener: (context, state) {
-                  if (state.isLoading && state.products.isEmpty) {
-                    // Clear search when loading initial data
+                  if (state.searchQuery == null) {
                     _searchController.clear();
                   }
                 },
@@ -146,21 +145,27 @@ class _ProductListScreenState extends State<ProductListScreen> {
                             padding: const EdgeInsets.all(16),
                             margin: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.secondaryContainer,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.secondaryContainer,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               children: [
                                 Icon(
                                   Icons.info_outline,
-                                  color: Theme.of(context).colorScheme.onSecondaryContainer,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSecondaryContainer,
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
                                     'No results for "${state.searchQuery}" in ${_getCategoryName(state.selectedCategory!)}. Showing all ${_getCategoryName(state.selectedCategory!)} products:',
                                     style: TextStyle(
-                                      color: Theme.of(context).colorScheme.onSecondaryContainer,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSecondaryContainer,
                                     ),
                                   ),
                                 ),
@@ -172,11 +177,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               padding: const EdgeInsets.all(16),
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                childAspectRatio: 0.7,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 16,
-                              ),
+                                    crossAxisCount: 2,
+                                    childAspectRatio: 0.7,
+                                    crossAxisSpacing: 16,
+                                    mainAxisSpacing: 16,
+                                  ),
                               itemCount: state.categoryProducts.length,
                               itemBuilder: (context, index) {
                                 final product = state.categoryProducts[index];
@@ -213,41 +218,51 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       // Wait for the refresh to complete
                       await Future.delayed(const Duration(milliseconds: 500));
                     },
-                    child: GridView.builder(
+                    child: CustomScrollView(
                       controller: _scrollController,
-                      padding: const EdgeInsets.all(16),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.7,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                      ),
-                      itemCount:
-                          state.products.length + (state.isLoadingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index >= state.products.length) {
-                          return const LoadingMoreIndicator();
-                        }
-                        final product = state.products[index];
-                        return ProductCard(
-                          product: product,
-                          showCategoryMismatch: state.selectedCategory != null &&
-                              state.searchQuery != null,
-                          selectedCategory: state.selectedCategory,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ProductDetailScreen(
-                                  productId: product.id,
-                                  product: product,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverPadding(
+                          padding: const EdgeInsets.all(16),
+                          sliver: SliverGrid(
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  childAspectRatio: 0.7,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
                                 ),
-                              ),
-                            );
-                          },
-                        );
-                      },
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final product = state.products[index];
+                              return ProductCard(
+                                product: product,
+                                showCategoryMismatch:
+                                    state.selectedCategory != null &&
+                                    state.searchQuery != null,
+                                selectedCategory: state.selectedCategory,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ProductDetailScreen(
+                                        productId: product.id,
+                                        product: product,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            }, childCount: state.products.length),
+                          ),
+                        ),
+                        if (state.isLoadingMore)
+                          const SliverToBoxAdapter(
+                            child: LoadingMoreIndicator(),
+                          ),
+                      ],
                     ),
                   );
                 },
@@ -262,23 +277,31 @@ class _ProductListScreenState extends State<ProductListScreen> {
   Widget _buildSearchBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: 'Search products...',
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    _bloc?.add(const ClearSearch());
-                  },
-                )
-              : null,
-          border: const OutlineInputBorder(),
-        ),
-        onChanged: _onSearchChanged,
+      child: ValueListenableBuilder<TextEditingValue>(
+        valueListenable: _searchController,
+        builder: (context, value, child) {
+          return TextField(
+            onTapOutside: (event) {
+              FocusScope.of(context).unfocus();
+            },
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search products...',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: value.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        _bloc?.add(const ClearSearch());
+                      },
+                    )
+                  : null,
+              border: const OutlineInputBorder(),
+            ),
+            onChanged: _onSearchChanged,
+          );
+        },
       ),
     );
   }

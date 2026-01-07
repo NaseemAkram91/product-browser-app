@@ -41,19 +41,20 @@ class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
 
     result.fold(
       (failure) {
-        emit(state.copyWith(
-          isLoading: false,
-          error: mapFailureToMessage(failure),
-        ));
+        emit(
+          state.copyWith(isLoading: false, error: mapFailureToMessage(failure)),
+        );
       },
       (products) {
-        emit(state.copyWith(
-          isLoading: false,
-          products: products,
-          hasMore: products.length >= state.limit,
-          skip: products.length,
-          error: null,
-        ));
+        emit(
+          state.copyWith(
+            isLoading: false,
+            products: products,
+            hasMore: products.length >= state.limit,
+            skip: products.length,
+            error: null,
+          ),
+        );
       },
     );
   }
@@ -73,19 +74,23 @@ class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
 
     result.fold(
       (failure) {
-        emit(state.copyWith(
-          isLoadingMore: false,
-          error: mapFailureToMessage(failure),
-        ));
+        emit(
+          state.copyWith(
+            isLoadingMore: false,
+            error: mapFailureToMessage(failure),
+          ),
+        );
       },
       (products) {
-        emit(state.copyWith(
-          isLoadingMore: false,
-          products: [...state.products, ...products],
-          hasMore: products.length >= state.limit,
-          skip: state.skip + products.length,
-          error: null,
-        ));
+        emit(
+          state.copyWith(
+            isLoadingMore: false,
+            products: [...state.products, ...products],
+            hasMore: products.length >= state.limit,
+            skip: state.skip + products.length,
+            error: null,
+          ),
+        );
       },
     );
   }
@@ -100,19 +105,20 @@ class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
 
     result.fold(
       (failure) {
-        emit(state.copyWith(
-          isLoading: false,
-          error: mapFailureToMessage(failure),
-        ));
+        emit(
+          state.copyWith(isLoading: false, error: mapFailureToMessage(failure)),
+        );
       },
       (products) {
-        emit(state.copyWith(
-          isLoading: false,
-          products: products,
-          hasMore: products.length >= state.limit,
-          skip: products.length,
-          error: null,
-        ));
+        emit(
+          state.copyWith(
+            isLoading: false,
+            products: products,
+            hasMore: products.length >= state.limit,
+            skip: products.length,
+            error: null,
+          ),
+        );
       },
     );
   }
@@ -128,20 +134,17 @@ class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
 
     final selectedCategory = state.selectedCategory;
 
-    emit(state.copyWith(
-      isLoading: true,
-      error: null,
-      searchQuery: event.query,
-    ));
+    emit(
+      state.copyWith(isLoading: true, error: null, searchQuery: event.query),
+    );
 
     final result = await searchProductsUseCase(query: event.query, limit: 100);
 
     await result.fold(
       (failure) async {
-        emit(state.copyWith(
-          isLoading: false,
-          error: mapFailureToMessage(failure),
-        ));
+        emit(
+          state.copyWith(isLoading: false, error: mapFailureToMessage(failure)),
+        );
       },
       (products) async {
         List<Product> displayProducts = products;
@@ -153,33 +156,33 @@ class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
         } else if (selectedCategory != null) {
           // Only if search returned NO results and a category is selected,
           // load all products from that category as fallback
-          final allProductsResult = await getProductsUseCase(limit: 100, skip: 0);
-          allProductsResult.fold(
-            (failure) {},
-            (allProducts) {
-              categoryFallbackProducts = allProducts
-                  .where((p) => p.category == selectedCategory)
-                  .toList();
-            },
+          final allProductsResult = await getProductsUseCase(
+            limit: 100,
+            skip: 0,
           );
+          allProductsResult.fold((failure) {}, (allProducts) {
+            categoryFallbackProducts = allProducts
+                .where((p) => p.category == selectedCategory)
+                .toList();
+          });
         }
 
-        emit(state.copyWith(
-          isLoading: false,
-          products: displayProducts,
-          categoryProducts: categoryFallbackProducts,
-          hasMore: false,
-          skip: displayProducts.length,
-          error: null,
-        ));
+        emit(
+          state.copyWith(
+            isLoading: false,
+            products: displayProducts,
+            categoryProducts: categoryFallbackProducts,
+            hasMore: false,
+            skip: displayProducts.length,
+            error: null,
+          ),
+        );
       },
     );
   }
 
-  void _onClearSearch(
-    ClearSearch event,
-    Emitter<ProductListState> emit,
-  ) {
+  void _onClearSearch(ClearSearch event, Emitter<ProductListState> emit) {
+    emit(state.copyWith(clearSearchQuery: true));
     if (state.selectedCategory != null) {
       add(FilterByCategory(category: state.selectedCategory));
     } else {
@@ -191,13 +194,15 @@ class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
     FilterByCategory event,
     Emitter<ProductListState> emit,
   ) async {
-    emit(state.copyWith(
-      isLoading: true,
-      error: null,
-      selectedCategory: event.category,
-      searchQuery: null,
-      categoryProducts: [],
-    ));
+    emit(
+      state.copyWith(
+        isLoading: true,
+        error: null,
+        selectedCategory: event.category,
+        clearSearchQuery: true,
+        categoryProducts: [],
+      ),
+    );
 
     if (event.category == null) {
       add(const LoadProducts());
@@ -208,32 +213,30 @@ class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
 
     result.fold(
       (failure) {
-        emit(state.copyWith(
-          isLoading: false,
-          error: mapFailureToMessage(failure),
-        ));
+        emit(
+          state.copyWith(isLoading: false, error: mapFailureToMessage(failure)),
+        );
       },
       (products) {
         final filteredProducts = products
             .where((p) => p.category == event.category)
             .toList();
 
-        emit(state.copyWith(
-          isLoading: false,
-          products: filteredProducts,
-          categoryProducts: [],
-          hasMore: false,
-          skip: filteredProducts.length,
-          error: null,
-        ));
+        emit(
+          state.copyWith(
+            isLoading: false,
+            products: filteredProducts,
+            categoryProducts: [],
+            hasMore: false,
+            skip: filteredProducts.length,
+            error: null,
+          ),
+        );
       },
     );
   }
 
-  void _onRetry(
-    Retry event,
-    Emitter<ProductListState> emit,
-  ) {
+  void _onRetry(Retry event, Emitter<ProductListState> emit) {
     if (state.searchQuery != null && state.searchQuery!.isNotEmpty) {
       add(SearchProducts(query: state.searchQuery!));
     } else if (state.selectedCategory != null) {

@@ -37,6 +37,7 @@ class ProductListState extends Equatable {
     bool? isLoadingMore,
     String? error,
     String? searchQuery,
+    bool clearSearchQuery = false,
     String? selectedCategory,
     List<String>? categories,
     bool? hasMore,
@@ -49,7 +50,7 @@ class ProductListState extends Equatable {
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       error: error,
-      searchQuery: searchQuery ?? this.searchQuery,
+      searchQuery: clearSearchQuery ? null : (searchQuery ?? this.searchQuery),
       selectedCategory: selectedCategory ?? this.selectedCategory,
       categories: categories ?? this.categories,
       hasMore: hasMore ?? this.hasMore,
@@ -60,18 +61,18 @@ class ProductListState extends Equatable {
 
   @override
   List<Object?> get props => [
-        products,
-        categoryProducts,
-        isLoading,
-        isLoadingMore,
-        error,
-        searchQuery,
-        selectedCategory,
-        categories,
-        hasMore,
-        skip,
-        limit,
-      ];
+    products,
+    categoryProducts,
+    isLoading,
+    isLoadingMore,
+    error,
+    searchQuery,
+    selectedCategory,
+    categories,
+    hasMore,
+    skip,
+    limit,
+  ];
 
   /// Returns true if we're in a loading or initial state
   bool get isInitial => isLoading && products.isEmpty;
