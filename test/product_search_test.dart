@@ -1,7 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:product_browser_app/domain/entities/product.dart';
 import 'package:product_browser_app/domain/usecases/get_categories.dart';
 import 'package:product_browser_app/domain/usecases/get_products.dart';
 import 'package:product_browser_app/domain/usecases/search_products.dart';
@@ -11,7 +10,9 @@ import 'package:product_browser_app/presentation/features/product_list/bloc/prod
 import 'package:dartz/dartz.dart';
 
 class MockGetProductsUseCase extends Mock implements GetProductsUseCase {}
+
 class MockSearchProductsUseCase extends Mock implements SearchProductsUseCase {}
+
 class MockGetCategoriesUseCase extends Mock implements GetCategoriesUseCase {}
 
 void main() {
@@ -53,15 +54,20 @@ void main() {
     blocTest<ProductListBloc, ProductListState>(
       'emits correct state when search query is cleared',
       build: () {
-        when(() => mockGetProductsUseCase(limit: any(named: 'limit'), skip: any(named: 'skip')))
-            .thenAnswer((_) async => const Right([]));
-        when(() => mockGetCategoriesUseCase())
-            .thenAnswer((_) async => const Right([]));
+        when(
+          () => mockGetProductsUseCase(
+            limit: any(named: 'limit'),
+            skip: any(named: 'skip'),
+          ),
+        ).thenAnswer((_) async => const Right([]));
+        when(
+          () => mockGetCategoriesUseCase(),
+        ).thenAnswer((_) async => const Right([]));
         return bloc;
       },
       act: (bloc) => bloc.add(const ClearSearch()),
       verify: (bloc) {
-         // Verify that LoadProducts is added which eventually clears search query
+        // Verify that LoadProducts is added which eventually clears search query
       },
     );
   });
